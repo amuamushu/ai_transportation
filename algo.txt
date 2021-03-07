@@ -1,0 +1,34 @@
+import pandas as pd
+import numpy as np
+import time
+from datetime import timedelta 
+from datetime import datetime
+
+def convtime(s):
+    fmt = "%H:%M:%S"
+    return datetime.strptime(s, fmt)
+    
+def name_transform(x):
+    if 'WB' in x:
+        x = x.replace('WB','EB')
+    return x
+    
+eb = pd.read_csv('78 EB.csv')
+eb = eb[eb.Name.str.contains('to')]
+
+wb = pd.read_csv('78 WB .csv')
+wb = wb[wb.Name.str.contains('to')]
+
+wb['wb_convtime'] = wb['Time'].apply(convtime)
+wb['delay_time'] = wb['wb_convtime'] + timedelta(minutes=1)  
+
+eb["eb_convtime"] = eb['Time'].apply(convtime)
+
+wb['transform_name'] = wb['Name'].apply(name_transform)
+
+new_df = pd.merge(eb, wb,  how='inner', left_on=['Name','eb_convtime'], right_on = ['transform_name','delay_time'])
+
+new_df = new_df[['Name_x', 'transform_name','pcw1occ_x', 'pcw1speed_x', 'pcw1vol_x', 'r_1_offcnt_x', 'r_2_offcnt_x',
+                'pcw1occ_y', 'pcw1speed_y', 'pcw1vol_y', 'r_1_offcnt_y', 'r_2_offcnt_y']]
+                
+filtered_df = new_df[new_df[['Name_x', 'transform_name']].notnull()]
